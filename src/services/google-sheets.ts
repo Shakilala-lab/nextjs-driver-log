@@ -2,9 +2,10 @@
 import { google } from 'googleapis';
 import { JWT } from 'google-auth-library';
 
-/**
- * Represents data to be written to a Google Sheet.
- */
+interface serviceAccount {
+  private_key: string;
+  client_email: string;
+}
 
 /**
  * The ID of the Google Sheet where the data will be written.
@@ -24,21 +25,21 @@ export interface SheetData {
 }
 
 async function getServiceAccountAuth() {
-  const clientEmail = process.env.GOOGLE_SHEETS_CLIENT_EMAIL;
-  const privateKey = process.env.GOOGLE_SHEETS_PRIVATE_KEY?.replace(/\\n/g, '\n');
+  try {
+    const serviceAccount = (await import('./service-account.json', {
+      assert: { type: 'json' },
+    })) as any;
 
-  if (!clientEmail || !privateKey) {
-    throw new Error(
-      'Missing Google Sheets credentials. Ensure GOOGLE_SHEETS_CLIENT_EMAIL and GOOGLE_SHEETS_PRIVATE_KEY are set in your environment variables.'
-    );
+    const auth = new JWT({
+      email: serviceAccount.default.client_email,
+      key: serviceAccount.default.private_key,
+      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+    });
+    return auth;
+  } catch (error: any) {
+    console.error('Error getting service account auth:', error);
+    throw error;
   }
-
-  const auth = new JWT({
-    email: clientEmail,
-    key: privateKey,
-    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-  });
-  return auth;
 }
 
 async function getNextAvailableRow(sheets: any, spreadsheetId: string, sheetName: string): Promise<number> {
