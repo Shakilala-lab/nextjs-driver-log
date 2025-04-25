@@ -3,6 +3,10 @@ import { google } from 'googleapis';
 import { JWT } from 'google-auth-library';
 
 /**
+ * Represents data to be written to a Google Sheet.
+ */
+
+/**
  * The ID of the Google Sheet where the data will be written.
  */
 const SPREADSHEET_ID = process.env.GOOGLE_SHEET_ID;
