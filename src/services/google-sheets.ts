@@ -25,14 +25,17 @@ export interface SheetData {
 async function getServiceAccountAuth() {
   try {
     const clientEmail = process.env.GOOGLE_SHEETS_CLIENT_EMAIL;
-    const privateKey = process.env.GOOGLE_SHEETS_PRIVATE_KEY?.replace(/\\n/g, '\n');
+    let privateKey = process.env.GOOGLE_SHEETS_PRIVATE_KEY;
 
     if (!clientEmail || !privateKey) {
       throw new Error(
         'Missing Google Sheets credentials. Ensure GOOGLE_SHEETS_CLIENT_EMAIL and GOOGLE_SHEETS_PRIVATE_KEY are set in your environment variables.'
       );
     }
-
+        // Sanitize the private key by replacing escaped newline characters with actual line breaks
+    if (typeof privateKey === 'string') {
+          privateKey = privateKey.replace(/\\n/g, '\n');
+    }
     const auth = new JWT({
       email: clientEmail,
       key: privateKey,
