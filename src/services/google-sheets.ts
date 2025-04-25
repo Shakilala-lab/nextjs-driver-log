@@ -5,7 +5,7 @@ import { JWT } from 'google-auth-library';
 /**
  * The ID of the Google Sheet where the data will be written.
  */
-const SPREADSHEET_ID = '1CVuIvwFjknaO_2Ajb4ZSo0GDj5vxZu7VsXqvHnrFjzQ';
+const SPREADSHEET_ID = process.env.GOOGLE_SHEET_ID;
 
 /**
  * Represents data to be written to a Google Sheet.
@@ -44,7 +44,6 @@ async function getServiceAccountAuth() {
     throw error;
   }
 }
-
 
 export async function writeToSheet(spreadsheetId: string, data: SheetData, sheetName: string): Promise<void> {
   try {
@@ -142,16 +141,25 @@ async function checkIfDateEntryExists(sheets: any, spreadsheetId: string, sheetN
   return false; // Date entry does not exist
 }
 
-
 export async function createSheet(username: string): Promise<void> {
   try {
     const auth = await getServiceAccountAuth();
     const sheets = google.sheets({ version: 'v4', auth });
 
+    if (!SPREADSHEET_ID) {
+      throw new Error('GOOGLE_SHEET_ID environment variable not set.');
+    }
+
     // Check if the sheet already exists
-    const metadata = await sheets.spreadsheets.get({
-      spreadsheetId: SPREADSHEET_ID,
-    });
+    let metadata;
+    try {
+      metadata = await sheets.spreadsheets.get({
+        spreadsheetId: SPREADSHEET_ID,
+      });
+    } catch (error: any) {
+      console.error('Error getting spreadsheet metadata:', error);
+      throw new Error(`Failed to get spreadsheet metadata: ${error.message}`);
+    }
 
     const sheetExists = metadata.data.sheets?.some(sheet => sheet.properties?.title === username);
 
@@ -166,16 +174,22 @@ export async function createSheet(username: string): Promise<void> {
         },
       };
 
-      const batchUpdateResponse = await sheets.spreadsheets.batchUpdate({
-        spreadsheetId: SPREADSHEET_ID,
-        requestBody: {
-          requests: [
-            {
-              addSheet: addSheetRequest.resource,
-            },
-          ],
-        },
-      });
+      let batchUpdateResponse;
+      try {
+        batchUpdateResponse = await sheets.spreadsheets.batchUpdate({
+          spreadsheetId: SPREADSHEET_ID,
+          requestBody: {
+            requests: [
+              {
+                addSheet: addSheetRequest.resource,
+              },
+            ],
+          },
+        });
+      } catch (error: any) {
+        console.error('Error creating sheet:', error);
+        throw new Error(`Failed to create sheet: ${error.message}`);
+      }
 
       const newSheetId = batchUpdateResponse.data.replies?.[0]?.addSheet?.properties?.sheetId;
 
@@ -188,12 +202,17 @@ export async function createSheet(username: string): Promise<void> {
         values: headerValues,
       };
 
-      await sheets.spreadsheets.values.update({
-        spreadsheetId: SPREADSHEET_ID,
-        range: `${username}!A1:I1`,
-        valueInputOption: "USER_ENTERED",
-        requestBody: headerResource,
-      });
+      try {
+        await sheets.spreadsheets.values.update({
+          spreadsheetId: SPREADSHEET_ID,
+          range: `${username}!A1:I1`,
+          valueInputOption: "USER_ENTERED",
+          requestBody: headerResource,
+        });
+      } catch (error: any) {
+        console.error('Error writing headers to sheet:', error);
+        throw new Error(`Failed to write headers to sheet: ${error.message}`);
+      }
 
       console.log(`Sheet "${username}" created successfully.`);
     } else {
