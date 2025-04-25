@@ -2,7 +2,6 @@
 import { google } from 'googleapis';
 import { JWT } from 'google-auth-library';
 
-import { auth } from 'googleapis/build/src/apis/abusiveexperiencereport';
 /**
  * The ID of the Google Sheet where the data will be written.
  */
@@ -26,7 +25,7 @@ export interface SheetData {
 async function getServiceAccountAuth() {
   try {
     const clientEmail = process.env.GOOGLE_SHEETS_CLIENT_EMAIL;
-    let privateKey = process.env.GOOGLE_SHEETS_PRIVATE_KEY;
+    const privateKey = process.env.GOOGLE_SHEETS_PRIVATE_KEY?.replace(/\\n/g, '\n');
 
     if (!clientEmail || !privateKey) {
       throw new Error(
@@ -34,20 +33,18 @@ async function getServiceAccountAuth() {
       );
     }
 
-    // Sanitize the private key by replacing escaped newline characters with actual line breaks
-    privateKey = privateKey.replace(/\\n/g, '\n');
-
     const auth = new JWT({
       email: clientEmail,
       key: privateKey,
       scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     });
     return auth;
-  } catch (error) {
-    console.error('Error getting Google Sheets authentication:', error);
+  } catch (error: any) {
+    console.error('Error getting service account auth:', error);
     throw error;
   }
 }
+
 
 export async function writeToSheet(spreadsheetId: string, data: SheetData, sheetName: string): Promise<void> {
   try {
