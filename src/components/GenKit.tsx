@@ -1,4 +1,3 @@
-tsx
 import React from 'react';
 import { ai } from '@/ai/ai-instance';
 
