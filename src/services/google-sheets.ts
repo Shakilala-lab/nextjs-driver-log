@@ -2,11 +2,15 @@
 import { google } from 'googleapis';
 import { JWT } from 'google-auth-library';
 
+import { auth } from 'googleapis/build/src/apis/abusiveexperiencereport';
 /**
  * The ID of the Google Sheet where the data will be written.
  */
-const SPREADSHEET_ID = process.env.GOOGLE_SHEET_ID;
+const SPREADSHEET_ID = '1CVuIvwFjknaO_2Ajb4ZSo0GDj5vxZu7VsXqvHnrFjzQ';
 
+/**
+ * Represents data to be written to a Google Sheet.
+ */
 export interface SheetData {
   A1?: string;
   B1?: string;
@@ -39,24 +43,10 @@ async function getServiceAccountAuth() {
       scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     });
     return auth;
-  } catch (error: any) {
-    console.error('Error getting service account auth:', error);
+  } catch (error) {
+    console.error('Error getting Google Sheets authentication:', error);
     throw error;
   }
-}
-
-async function getNextAvailableRow(sheets: any, spreadsheetId: string, sheetName: string): Promise<number> {
-  const result = await sheets.spreadsheets.values.get({
-    spreadsheetId,
-    range: `${sheetName}!A:A`,
-  });
-
-  const values = result.data.values;
-  if (!values) {
-    return 1;
-  }
-
-  return values.length + 1;
 }
 
 export async function writeToSheet(spreadsheetId: string, data: SheetData, sheetName: string): Promise<void> {
@@ -113,6 +103,46 @@ export async function writeToSheet(spreadsheetId: string, data: SheetData, sheet
     console.error('Error writing to sheet:', error);
     throw error;
   }
+}
+
+
+async function getNextAvailableRow(sheets: any, spreadsheetId: string, sheetName: string): Promise<number> {
+  const result = await sheets.spreadsheets.values.get({
+    spreadsheetId,
+    range: `${sheetName}!A:A`,
+  });
+
+  const values = result.data.values;
+  if (!values) {
+    return 1;
+  }
+
+  return values.length + 1;
+}
+
+async function checkIfDateEntryExists(sheets: any, spreadsheetId: string, sheetName: string, date: string, entryType: string): Promise<boolean> {
+  let range;
+  if (entryType === "refueling") {
+    range = `${sheetName}!G:G`;  // Different range for refueling
+  } else {
+    range = `${sheetName}!A:A`;
+  }
+
+  const response = await sheets.spreadsheets.values.get({
+    spreadsheetId: spreadsheetId,
+    range: range,
+  });
+
+  const values = response.data.values;
+  if (values && values.length > 0) {
+    // Check if the date already exists in the sheet for the specified entry type
+    for (let i = 0; i < values.length; i++) {
+      if (values[i][0] === date) {
+        return true; // Date entry already exists
+      }
+    }
+  }
+  return false; // Date entry does not exist
 }
 
 
@@ -177,4 +207,3 @@ export async function createSheet(username: string): Promise<void> {
     throw error;
   }
 }
-
