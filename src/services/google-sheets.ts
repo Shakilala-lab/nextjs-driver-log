@@ -19,7 +19,7 @@ export interface SheetData {
   G1?: string;
 }
 
-async function getGoogleSheetsAuth() {
+async function getServiceAccountAuth() {
   const clientEmail = process.env.GOOGLE_SHEETS_CLIENT_EMAIL;
   const privateKey = process.env.GOOGLE_SHEETS_PRIVATE_KEY?.replace(/\\n/g, '\n');
 
@@ -34,7 +34,6 @@ async function getGoogleSheetsAuth() {
     key: privateKey,
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],
   });
-
   return auth;
 }
 
@@ -54,8 +53,8 @@ async function getNextAvailableRow(sheets: any, spreadsheetId: string, sheetName
 
 export async function writeToSheet(spreadsheetId: string, data: SheetData, sheetName: string): Promise<void> {
   try {
-    const auth = await getGoogleSheetsAuth();
-    const sheets = google.sheets({version: 'v4', auth});
+    const auth = await getServiceAccountAuth();
+    const sheets = google.sheets({ version: 'v4', auth });
 
     // Check if the sheet exists, create it if it doesn't
     await createSheet(sheetName);
@@ -65,28 +64,28 @@ export async function writeToSheet(spreadsheetId: string, data: SheetData, sheet
     let range;
     let values;
 
-      if (data.G1 !== undefined) {
-          range = `${sheetName}!G${nextRow}:I${nextRow}`;
-          values = [
-              [
-                  data.G1 || '',
-                  data.H1 || '',
-                  data.I1 || '',
-              ],
-          ];
-      }
-      else {
-          range = `${sheetName}!A${nextRow}:E${nextRow}`;
-          values = [
-              [
-                  data.A1 || '',
-                  data.B1 || '',
-                  data.C1 || '',
-                  data.D1 || '',
-                  data.E1 || '',
-              ],
-          ];
-      }
+    if (data.G1 !== undefined) {
+      range = `${sheetName}!G${nextRow}:I${nextRow}`;
+      values = [
+        [
+          data.G1 || '',
+          data.H1 || '',
+          data.I1 || '',
+        ],
+      ];
+    }
+    else {
+      range = `${sheetName}!A${nextRow}:E${nextRow}`;
+      values = [
+        [
+          data.A1 || '',
+          data.B1 || '',
+          data.C1 || '',
+          data.D1 || '',
+          data.E1 || '',
+        ],
+      ];
+    }
 
 
     const resource = {
@@ -111,8 +110,8 @@ export async function writeToSheet(spreadsheetId: string, data: SheetData, sheet
 
 export async function createSheet(username: string): Promise<void> {
   try {
-    const auth = await getGoogleSheetsAuth();
-    const sheets = google.sheets({version: 'v4', auth});
+    const auth = await getServiceAccountAuth();
+    const sheets = google.sheets({ version: 'v4', auth });
 
     // Check if the sheet already exists
     const metadata = await sheets.spreadsheets.get({
@@ -147,16 +146,16 @@ export async function createSheet(username: string): Promise<void> {
 
       // Write headers to the new sheet
       const headerValues = [
-        ["Дата", "Одометр", "Время отметки медика", "Время карты вставил-вытащил", "Гос номер автобуса", "", "Дата", "Одометр", "Литры"],
+        ["Дата", "Одометр", "Время отметки медика", "Время карты вставил-вытащил", "Гос номер автобуса", , "Дата", "Одометр", "Литры"],
       ];
-        
+
       const headerResource = {
         values: headerValues,
       };
 
       await sheets.spreadsheets.values.update({
         spreadsheetId: SPREADSHEET_ID,
-        range: `${username}!A1:Z590`,
+        range: `${username}!A1:I1`,
         valueInputOption: "USER_ENTERED",
         requestBody: headerResource,
       });
