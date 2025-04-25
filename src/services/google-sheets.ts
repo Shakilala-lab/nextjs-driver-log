@@ -1,7 +1,10 @@
-''use server';
+'use server';
 import { google } from 'googleapis';
 import { JWT } from 'google-auth-library';
-import serviceAccountKey from '../../config/service-account-key.json';
+
+const serviceAccountKey = JSON.parse(
+  process.env.GOOGLE_SERVICE_ACCOUNT_KEY ?? '{}'
+);
 interface serviceAccount {
   private_key: string;
   client_email: string;

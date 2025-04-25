@@ -18,6 +18,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
+import GenKitWrapper from '@/components/GenKitWrapper';
 const userSchema = z.object({
   username: z.string().min(2, {
     message: "Username must be at least 2 characters.",
@@ -80,6 +81,7 @@ export default function Home() {
     <div className="flex flex-col items-center justify-center min-h-screen py-2">
       <main className="flex flex-col items-center justify-center w-full flex-1 px-20 text-center">
         <Welcome />
+        <GenKitWrapper/>
       </main>
     </div>
   );
