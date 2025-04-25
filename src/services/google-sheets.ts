@@ -26,13 +26,21 @@ export interface SheetData {
 
 async function getServiceAccountAuth() {
   try {
-    const serviceAccount = (await import('./service-account.json', {
-      assert: { type: 'json' },
-    })) as any;
+    const clientEmail = process.env.GOOGLE_SHEETS_CLIENT_EMAIL;
+    let privateKey = process.env.GOOGLE_SHEETS_PRIVATE_KEY;
+
+    if (!clientEmail || !privateKey) {
+      throw new Error(
+        'Missing Google Sheets credentials. Ensure GOOGLE_SHEETS_CLIENT_EMAIL and GOOGLE_SHEETS_PRIVATE_KEY are set in your environment variables.'
+      );
+    }
+
+    // Sanitize the private key by replacing escaped newline characters with actual line breaks
+    privateKey = privateKey.replace(/\\n/g, '\n');
 
     const auth = new JWT({
-      email: serviceAccount.default.client_email,
-      key: serviceAccount.default.private_key,
+      email: clientEmail,
+      key: privateKey,
       scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     });
     return auth;
