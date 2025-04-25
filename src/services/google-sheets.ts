@@ -2,11 +2,6 @@
 import { google } from 'googleapis';
 import { JWT } from 'google-auth-library';
 
-interface serviceAccount {
-  private_key: string;
-  client_email: string;
-}
-
 /**
  * The ID of the Google Sheet where the data will be written.
  */
@@ -182,3 +177,4 @@ export async function createSheet(username: string): Promise<void> {
     throw error;
   }
 }
+
