@@ -2,12 +2,10 @@
 import { google } from 'googleapis';
 import { JWT } from 'google-auth-library';
 
-interface serviceAccount {
-  private_key: string;
-  client_email: string;
-}
-
-const SPREADSHEET_ID = '1CVuIvwFjknaO_2Ajb4ZSo0GDj5vxZu7VsXqvHnrFjzQ';
+/**
+ * The ID of the Google Sheet where the data will be written.
+ */
+const SPREADSHEET_ID = process.env.GOOGLE_SHEET_ID;
 
 export interface SheetData {
   A1?: string;
@@ -23,15 +21,13 @@ export interface SheetData {
 
 async function getGoogleSheetsAuth() {
   const clientEmail = process.env.GOOGLE_SHEETS_CLIENT_EMAIL;
-  let privateKey = process.env.GOOGLE_SHEETS_PRIVATE_KEY;
+  const privateKey = process.env.GOOGLE_SHEETS_PRIVATE_KEY?.replace(/\\n/g, '\n');
 
   if (!clientEmail || !privateKey) {
     throw new Error(
       'Missing Google Sheets credentials. Ensure GOOGLE_SHEETS_CLIENT_EMAIL and GOOGLE_SHEETS_PRIVATE_KEY are set in your environment variables.'
     );
   }
-
-    privateKey = privateKey.replace(/\\n/g, '\n');
 
   const auth = new JWT({
     email: clientEmail,
