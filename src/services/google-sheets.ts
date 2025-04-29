@@ -2,7 +2,7 @@
 import { google } from 'googleapis';
 import { JWT } from 'google-auth-library';
 
-const SPREADSHEET_ID = '1CVuIvwFjknaO_2Ajb4ZSo0GDj5vxZu7VsXqvHnrFjzQ';
+const SPREADSHEET_ID = process.env.GOOGLE_SHEETS_ID;
 
 export interface SheetData {
   A1?: string;
@@ -17,9 +17,8 @@ export interface SheetData {
 }
 
 async function getGoogleSheetsAuth() {
-  // Use environment variables instead of importing the json file
   const clientEmail = process.env.GOOGLE_SHEETS_CLIENT_EMAIL;
-  const privateKey = process.env.GOOGLE_SHEETS_PRIVATE_KEY?.replace(/\\n/g, '\n');
+  let privateKey = process.env.GOOGLE_SHEETS_PRIVATE_KEY?.replace(/\\n/g, '\n');
 
   if (!clientEmail || !privateKey) {
     throw new Error(
@@ -27,13 +26,18 @@ async function getGoogleSheetsAuth() {
     );
   }
 
-  const auth = new JWT({
-    email: clientEmail,
-    key: privateKey,
-    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-  });
+  try {
+    const auth = new JWT({
+      email: clientEmail,
+      key: privateKey,
+      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+    });
 
-  return auth;
+    return auth;
+  } catch (error: any) {
+    console.error('Error creating JWT client:', error);
+    throw new Error(`Failed to create JWT client: ${error.message}`);
+  }
 }
 
 async function getNextAvailableRow(sheets: any, spreadsheetId: string, sheetName: string): Promise<number> {
@@ -50,7 +54,10 @@ async function getNextAvailableRow(sheets: any, spreadsheetId: string, sheetName
   return values.length + 1;
 }
 
-export async function writeToSheet(spreadsheetId: string, data: SheetData, sheetName: string): Promise<void> {
+export async function writeToSheet(spreadsheetId: string | undefined, data: SheetData, sheetName: string): Promise<void> {
+  if (!spreadsheetId) {
+    throw new Error('SPREADSHEET_ID is not defined in environment variables.');
+  }
   try {
     const auth = await getGoogleSheetsAuth();
     const sheets = google.sheets({ version: 'v4', auth });
@@ -108,6 +115,10 @@ export async function writeToSheet(spreadsheetId: string, data: SheetData, sheet
 
 
 export async function createSheet(username: string): Promise<void> {
+  if (!SPREADSHEET_ID) {
+    throw new Error('SPREADSHEET_ID is not defined in environment variables.');
+  }
+
   try {
     const auth = await getGoogleSheetsAuth();
     const sheets = google.sheets({ version: 'v4', auth });
