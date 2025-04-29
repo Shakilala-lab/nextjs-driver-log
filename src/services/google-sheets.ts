@@ -2,7 +2,7 @@
 import { google } from 'googleapis';
 import { JWT } from 'google-auth-library';
 
-const SPREADSHEET_ID = process.env.GOOGLE_SHEETS_ID;
+const SPREADSHEET_ID = process.env.NEXT_PUBLIC_SPREADSHEET_ID;
 
 export interface SheetData {
   A1?: string;
