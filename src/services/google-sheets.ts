@@ -1,7 +1,7 @@
 'use server';
 import { google } from 'googleapis';
 import { JWT } from 'google-auth-library';
-import serviceAccountKey from '@/config/service-account-key.json';
+
 interface serviceAccount {
   private_key: string;
   client_email: string;
@@ -22,17 +22,19 @@ export interface SheetData {
 }
 
 async function getGoogleSheetsAuth() {
-  const { private_key, client_email } = serviceAccountKey as serviceAccount;
+  // Use environment variables instead of importing the json file
+  const clientEmail = process.env.GOOGLE_SHEETS_CLIENT_EMAIL;
+  const privateKey = process.env.GOOGLE_SHEETS_PRIVATE_KEY?.replace(/\\n/g, '\n');
 
-  if (!client_email || !private_key) {
+  if (!clientEmail || !privateKey) {
     throw new Error(
-      'Missing Google Sheets credentials. Ensure service-account-key.json is in the config directory.'
+      'Missing Google Sheets credentials. Ensure GOOGLE_SHEETS_CLIENT_EMAIL and GOOGLE_SHEETS_PRIVATE_KEY are set in your environment variables.'
     );
   }
 
   const auth = new JWT({
-    email: client_email,
-    key: private_key,
+    email: clientEmail,
+    key: privateKey,
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],
   });
 
@@ -56,7 +58,7 @@ async function getNextAvailableRow(sheets: any, spreadsheetId: string, sheetName
 export async function writeToSheet(spreadsheetId: string, data: SheetData, sheetName: string): Promise<void> {
   try {
     const auth = await getGoogleSheetsAuth();
-    const sheets = google.sheets({version: 'v4', auth});
+    const sheets = google.sheets({ version: 'v4', auth });
 
     // Check if the sheet exists, create it if it doesn't
     await createSheet(sheetName);
@@ -66,28 +68,28 @@ export async function writeToSheet(spreadsheetId: string, data: SheetData, sheet
     let range;
     let values;
 
-      if (data.G1 !== undefined) {
-          range = `${sheetName}!G${nextRow}:I${nextRow}`;
-          values = [
-              [
-                  data.G1 || '',
-                  data.H1 || '',
-                  data.I1 || '',
-              ],
-          ];
-      }
-      else {
-          range = `${sheetName}!A${nextRow}:E${nextRow}`;
-          values = [
-              [
-                  data.A1 || '',
-                  data.B1 || '',
-                  data.C1 || '',
-                  data.D1 || '',
-                  data.E1 || '',
-              ],
-          ];
-      }
+    if (data.G1 !== undefined) {
+      range = `${sheetName}!G${nextRow}:I${nextRow}`;
+      values = [
+        [
+          data.G1 || '',
+          data.H1 || '',
+          data.I1 || '',
+        ],
+      ];
+    }
+    else {
+      range = `${sheetName}!A${nextRow}:E${nextRow}`;
+      values = [
+        [
+          data.A1 || '',
+          data.B1 || '',
+          data.C1 || '',
+          data.D1 || '',
+          data.E1 || '',
+        ],
+      ];
+    }
 
 
     const resource = {
@@ -113,16 +115,16 @@ export async function writeToSheet(spreadsheetId: string, data: SheetData, sheet
 export async function createSheet(username: string): Promise<void> {
   try {
     const auth = await getGoogleSheetsAuth();
-    const sheets = google.sheets({version: 'v4', auth});
+    const sheets = google.sheets({ version: 'v4', auth });
 
     let metadata;
     try {
-        metadata = await sheets.spreadsheets.get({
-          spreadsheetId: SPREADSHEET_ID,
-        });
+      metadata = await sheets.spreadsheets.get({
+        spreadsheetId: SPREADSHEET_ID,
+      });
     } catch (error: any) {
-        console.error('Error getting spreadsheet metadata:', error);
-        throw new Error(`Failed to get spreadsheet metadata: ${error.message}`);
+      console.error('Error getting spreadsheet metadata:', error);
+      throw new Error(`Failed to get spreadsheet metadata: ${error.message}`);
     }
 
     const sheetExists = metadata.data.sheets?.some(sheet => sheet.properties?.title === username);
@@ -153,9 +155,9 @@ export async function createSheet(username: string): Promise<void> {
 
       // Write headers to the new sheet
       const headerValues = [
-        ["Дата", "Одометр", "Время отметки медика", "Время карты вставил-вытащил", "Гос номер автобуса", "", "Дата", "Одометр", "Литры"],
+        ["Дата", "Одометр", "Время отметки медика", "Время карты вставил-вытащил", "Гос номер автобуса", , "Дата", "Одометр", "Литры"],
       ];
-        
+
       const headerResource = {
         values: headerValues,
       };
