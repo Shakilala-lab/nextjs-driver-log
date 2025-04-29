@@ -2,11 +2,6 @@
 import { google } from 'googleapis';
 import { JWT } from 'google-auth-library';
 
-interface serviceAccount {
-  private_key: string;
-  client_email: string;
-}
-
 const SPREADSHEET_ID = '1CVuIvwFjknaO_2Ajb4ZSo0GDj5vxZu7VsXqvHnrFjzQ';
 
 export interface SheetData {
