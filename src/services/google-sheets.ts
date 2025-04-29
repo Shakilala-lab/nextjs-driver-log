@@ -16,17 +16,22 @@ export interface SheetData {
   G1?: string;
 }
 
+interface ServiceAccountKey {
+  client_email: string;
+  private_key: string;
+}
+
 async function getGoogleSheetsAuth() {
-  const clientEmail = process.env.GOOGLE_SHEETS_CLIENT_EMAIL;
-  let privateKey = process.env.GOOGLE_SHEETS_PRIVATE_KEY?.replace(/\\n/g, '\n');
-
-  if (!clientEmail || !privateKey) {
-    throw new Error(
-      'Missing Google Sheets credentials. Ensure GOOGLE_SHEETS_CLIENT_EMAIL and GOOGLE_SHEETS_PRIVATE_KEY are set in your environment variables.'
-    );
-  }
-
   try {
+    const clientEmail = process.env.GOOGLE_SHEETS_CLIENT_EMAIL;
+    const privateKey = process.env.GOOGLE_SHEETS_PRIVATE_KEY?.replace(/\\n/g, '\n');
+
+    if (!clientEmail || !privateKey) {
+      throw new Error(
+        'Missing Google Sheets credentials. Ensure GOOGLE_SHEETS_CLIENT_EMAIL and GOOGLE_SHEETS_PRIVATE_KEY are set in your environment variables.'
+      );
+    }
+    
     const auth = new JWT({
       email: clientEmail,
       key: privateKey,
@@ -34,7 +39,7 @@ async function getGoogleSheetsAuth() {
     });
 
     return auth;
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error creating JWT client:', error);
     throw new Error(`Failed to create JWT client: ${error.message}`);
   }
@@ -170,7 +175,7 @@ export async function createSheet(username: string): Promise<void> {
 
       await sheets.spreadsheets.values.update({
         spreadsheetId: SPREADSHEET_ID,
-        range: `${username}!A1:Z590`,
+        range: `${username}!A1:I1`,
         valueInputOption: "USER_ENTERED",
         requestBody: headerResource,
       });
