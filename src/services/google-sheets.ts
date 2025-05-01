@@ -4,7 +4,7 @@ import { JWT } from 'google-auth-library';
 
 const SERVICE_ACCOUNT_KEY_FILE_PATH = './service_account_key.json';
 
-const SPREADSHEET_ID = process.env['1CVuIvwFjknaO_2Ajb4ZSo0GDj5vxZu7VsXqvHnrFjzQ'];
+const SPREADSHEET_ID = '1CVuIvwFjknaO_2Ajb4ZSo0GDj5vxZu7VsXqvHnrFjzQ';
 
 export interface SheetData {
   A1?: string;
@@ -197,3 +197,4 @@ export async function createSheet(username: string): Promise<void> {
     throw error;
   }
 }
+
